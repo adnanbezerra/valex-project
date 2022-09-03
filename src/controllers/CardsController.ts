@@ -5,7 +5,9 @@ export async function postCard(req: Request, res: Response) {
     const apiKey = req.headers['x-api-key'];
     const cardInfo = req.body;
 
-    await createNewCard(apiKey, cardInfo);
+    const cardCVV = await createNewCard(apiKey, cardInfo);
 
-    res.status(201).send('Credit card successfully created');
+    console.log('chegou aqui');
+    
+    res.status(201).send(cardCVV);
 }

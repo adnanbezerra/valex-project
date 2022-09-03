@@ -23,6 +23,9 @@ export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     const card = { employeeId, number, cardholderName, securityCode, expirationDate, type: cardType, isVirtual: false, isBlocked: false };
 
     await insert(card);
+
+    const cvv = cryptr.decrypt(securityCode);
+    return cvv;
 }
 
 // auxiliary functions
@@ -40,10 +43,11 @@ async function checkEmployeeExistance(employeeId: number) {
     else return employee;
 }
 
-async function checkIfEmployeeAlreadyHasThisCard(cardType: TransactionTypes, employeeId: number) {
+async function checkIfEmployeeAlreadyHasThisCard(cardType: any, employeeId: number) {
     const isThereSuchEmployee = await findByTypeAndEmployeeId(cardType, employeeId);
 
     if (isThereSuchEmployee) throw { type: "error_employee_hasCard", message: "Employee already has this card" };
+    else return 'oi';
 }
 
 function getCardUsername(employee: Employee) {

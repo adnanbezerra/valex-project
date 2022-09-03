@@ -1,0 +1,1 @@
+export const CRYPTR_PASSWORD = '4#!!V1nc1tR3gn4t??#2'

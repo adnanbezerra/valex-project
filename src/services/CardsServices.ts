@@ -43,7 +43,7 @@ export async function createCardPassword(cardInfo: any) {
 }
 
 export async function generateCardBalance(cardNumber: string) {
-    const cardId = await getCardIdByNumber(cardNumber);
+    const { id: cardId } = await getCardIdByNumber(cardNumber);
 
     const rechargesList = await findByCardId(cardId);
     const paymentsList = await findPaymentsByCardId(cardId);
@@ -52,12 +52,33 @@ export async function generateCardBalance(cardNumber: string) {
 
     const response = {
         balance,
-        transactions: {...paymentsList},
-        recharges: {...rechargesList}
+        transactions: { ...paymentsList },
+        recharges: { ...rechargesList }
     }
 
     return response;
 }
+
+export async function blockCard(cardNumber: string, password: string) {
+    const creditCard = await getCardIdByNumber(cardNumber);
+
+    if (compareExpirationDate(creditCard.expirationDate)) throw { type: "error_creditCard_expired", message: "This credit card has already expired!" }
+    if (creditCard.isBlocked) throw { type: "error_creditCard_blocked", message: "This credit card is blocked!" }
+    if (!bcrypt.compareSync(password, creditCard.password)) throw { type: "error_wrongPassword", message: "Insert the right password!" }
+
+    await update(creditCard.id, { isBlocked: true });
+}
+
+export async function unblockCard(cardNumber: string, password: string) {
+    const creditCard = await getCardIdByNumber(cardNumber);
+
+    if (compareExpirationDate(creditCard.expirationDate)) throw { type: "error_creditCard_expired", message: "This credit card has already expired!" }
+    if (!creditCard.isBlocked) throw { type: "error_creditCard_notBlocked", message: "This credit card is not blocked!" }
+    if (!bcrypt.compareSync(password, creditCard.password)) throw { type: "error_wrongPassword", message: "Insert the right password!" }
+
+    await update(creditCard.id, { isBlocked: false });
+}
+
 
 // auxiliary functions for createNewCard function
 
@@ -139,7 +160,7 @@ function getBalanceResult(rechargesList: Recharge[], paymentsList: PaymentWithBu
 function getRechargesAmount(balanceData: Recharge[] | PaymentWithBusinessName[]) {
     let result = 0;
 
-    for(let data of balanceData) {
+    for (let data of balanceData) {
         result += data.amount;
     }
 
@@ -148,7 +169,9 @@ function getRechargesAmount(balanceData: Recharge[] | PaymentWithBusinessName[])
 
 async function getCardIdByNumber(cardNumber: string) {
     const creditCard = await findByCardNumber(cardNumber);
-    if(!creditCard) throw { type: "invalid_creditCard_Number", message: "Credit card number not found!" };
+    if (!creditCard) throw { type: "invalid_creditCard_Number", message: "Credit card number not found!" };
 
-    return creditCard.id;
+    return creditCard;
 }
+
+// auxiliary functions for blockCard and unblockCard functions

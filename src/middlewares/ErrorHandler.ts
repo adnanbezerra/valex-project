@@ -20,7 +20,19 @@ export default async function errorHandler(error: any, req: Request, res: Respon
         return res.status(401).send({ message: error.message });
     }
     if (error.type === "error_creditCard_expired") {
-        return res.status(401).send({ messaeg: error.message });
+        return res.status(401).send({ message: error.message });
+    }
+    if (error.type === "invalid_creditCard_Number") {
+        return res.status(401).send({ message: error.message })
+    }
+    if (error.type === "error_creditCard_blocked") {
+        return res.status(401).send({ message: error.message })
+    }
+    if (error.type === "error_creditCard_notBlocked") {
+        return res.status(401).send({ message: error.message });
+    }
+    if (error.type === "error_wrongPassword") {
+        return res.status(401).send({ message: error.message });
     }
     // res.sendStatus(500)
 }

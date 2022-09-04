@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
 import Cryptr from 'cryptr';
 import { Employee, findById } from '../repositories/employeeRepository.js';
-import { findByTypeAndEmployeeId, insert, TransactionTypes } from "../repositories/cardRepository.js";
+import { findByCardNumber, findByTypeAndEmployeeId, insert, TransactionTypes, update } from "../repositories/cardRepository.js";
 import { findByApiKey } from "../repositories/companyRepository.js";
 import { CRYPTR_PASSWORD } from '../utils/mock.js';
+import bcrypt from 'bcrypt'
 import dayjs from 'dayjs';
-
 
 export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     const { cardType, employeeId } = cardInfo;
@@ -20,7 +20,7 @@ export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     const cardholderName = getCardUsername(employee);
     const expirationDate = getExpirationDate();
 
-    const card = { employeeId, number, cardholderName, securityCode, expirationDate, type: cardType, isVirtual: false, isBlocked: false };
+    const card = { employeeId, number, cardholderName, securityCode, expirationDate, type: cardType, isVirtual: false, isBlocked: true };
 
     await insert(card);
 
@@ -28,7 +28,19 @@ export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     return cvv;
 }
 
-// auxiliary functions
+export async function createCardPassword(cardInfo: any) {
+    const { CVC, cardIdentifier, newPassword } = cardInfo;
+    const password = bcrypt.hashSync(newPassword, 10);
+    const isBlocked = true;
+
+    const creditCard = await checkCardIntegrity(CVC, cardIdentifier);
+
+    const cardId = creditCard.id;
+
+    await update(cardId, { password, isBlocked });
+}
+
+// auxiliary functions for createNewCard method
 
 async function checkApiValidity(apiKey: string | string[]) {
     const dataFromApi = await findByApiKey(apiKey);
@@ -68,4 +80,33 @@ function getExpirationDate() {
     const month = dayjs().format('MM');
 
     return `${month}/${year}`
+}
+
+// auxiliary functions for createCardPassword function 
+
+async function checkCardIntegrity(CVC: string, cardIdentifier: string) {
+    const creditCard = await findByCardNumber(cardIdentifier);
+    const cryptr = new Cryptr(`${CRYPTR_PASSWORD}`)
+
+    if (!creditCard) throw { type: "error_cardIdentifier_NotFound", message: "Insert a valid card number!" }
+    if (creditCard.password !== null) throw { type: "error_creditCard_alreadyActive", message: "This credit card is already active!" }
+
+    if (CVC !== cryptr.decrypt(creditCard.securityCode)) throw { type: "invalid_creditCard_CVC", message: "Type in the right CVC!" }
+    if (compareExpirationDate(creditCard.expirationDate)) throw { type: "error_creditCard_expired", message: "This credit card has already expired!" }
+
+    return creditCard;
+}
+
+function compareExpirationDate(date: string): boolean {
+    const yearNow = parseInt(dayjs().format('YY'));
+    const monthNow = parseInt(dayjs().format('MM'));
+
+    const [expirationYear, expirationMonth] = date.split("/");
+
+    if (yearNow > parseInt(expirationYear)) return false;
+    else if (yearNow === parseInt(expirationYear)) {
+        if (monthNow > parseInt(expirationMonth)) return false;
+    }
+
+    return true;
 }

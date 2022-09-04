@@ -67,6 +67,21 @@ export async function findByCardDetails(
   return result.rows[0];
 }
 
+
+export async function findByCardNumber(
+  number: string,
+) {
+  const result = await connection.query<Card, [string]>(
+    ` SELECT 
+        * 
+      FROM cards 
+      WHERE number=$1`,
+    [number]
+  );
+
+  return result.rows[0];
+}
+
 export async function insert(cardData: CardInsertData) {
   const {
     employeeId,
@@ -80,8 +95,6 @@ export async function insert(cardData: CardInsertData) {
     isBlocked,
     type,
   } = cardData;
-
-  console.log('chegou aqui no repository');
 
   connection.query(
     `

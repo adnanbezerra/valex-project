@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createNewCard } from '../services/CardsServices.js';
+import { createCardPassword, createNewCard } from '../services/CardsServices.js';
 
 export async function postCard(req: Request, res: Response) {
     const apiKey = req.headers['x-api-key'];
@@ -10,4 +10,11 @@ export async function postCard(req: Request, res: Response) {
     console.log('chegou aqui');
     
     res.status(201).send(cardCVV);
+}
+
+export async function activateCard(req: Request, res: Response) {
+    const cardInfo = req.body;
+    await createCardPassword(cardInfo);
+
+    res.sendStatus(201);
 }

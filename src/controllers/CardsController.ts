@@ -8,7 +8,7 @@ export async function postCard(req: Request, res: Response) {
     const cardCVV = await createNewCard(apiKey, cardInfo);
 
     console.log('chegou aqui');
-    
+
     res.status(201).send(cardCVV);
 }
 
@@ -20,9 +20,9 @@ export async function activateCard(req: Request, res: Response) {
 }
 
 export async function getBalance(req: Request, res: Response) {
-    const cardId = res.locals.cardId;
+    const { cardNumber } = req.body;
 
-    const balance = await generateCardBalance(cardId);
+    const balance = await generateCardBalance(cardNumber);
 
     res.status(200).send(balance);
 }

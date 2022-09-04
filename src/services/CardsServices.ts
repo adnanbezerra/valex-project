@@ -42,7 +42,9 @@ export async function createCardPassword(cardInfo: any) {
     await update(cardId, { password, isBlocked });
 }
 
-export async function generateCardBalance(cardId: number) {
+export async function generateCardBalance(cardNumber: string) {
+    const cardId = await getCardIdByNumber(cardNumber);
+
     const rechargesList = await findByCardId(cardId);
     const paymentsList = await findPaymentsByCardId(cardId);
 
@@ -142,4 +144,11 @@ function getRechargesAmount(balanceData: Recharge[] | PaymentWithBusinessName[])
     }
 
     return result;
+}
+
+async function getCardIdByNumber(cardNumber: string) {
+    const creditCard = await findByCardNumber(cardNumber);
+    if(!creditCard) throw { type: "invalid_creditCard_Number", message: "Credit card number not found!" };
+
+    return creditCard.id;
 }

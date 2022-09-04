@@ -6,6 +6,8 @@ import { findByApiKey } from "../repositories/companyRepository.js";
 import { CRYPTR_PASSWORD } from '../utils/mock.js';
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs';
+import { findByCardId, Recharge } from '../repositories/rechargeRepository.js';
+import { findPaymentsByCardId, PaymentWithBusinessName } from '../repositories/paymentRepository.js';
 
 export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     const { cardType, employeeId } = cardInfo;
@@ -40,7 +42,22 @@ export async function createCardPassword(cardInfo: any) {
     await update(cardId, { password, isBlocked });
 }
 
-// auxiliary functions for createNewCard method
+export async function generateCardBalance(cardId: number) {
+    const rechargesList = await findByCardId(cardId);
+    const paymentsList = await findPaymentsByCardId(cardId);
+
+    const balance = getBalanceResult(rechargesList, paymentsList);
+
+    const response = {
+        balance,
+        transactions: {...paymentsList},
+        recharges: {...rechargesList}
+    }
+
+    return response;
+}
+
+// auxiliary functions for createNewCard function
 
 async function checkApiValidity(apiKey: string | string[]) {
     const dataFromApi = await findByApiKey(apiKey);
@@ -109,4 +126,20 @@ function compareExpirationDate(date: string): boolean {
     }
 
     return true;
+}
+
+// auxiliary functions for generateCardBalance function
+
+function getBalanceResult(rechargesList: Recharge[], paymentsList: PaymentWithBusinessName[]) {
+    return getRechargesAmount(rechargesList) - getRechargesAmount(paymentsList);
+}
+
+function getRechargesAmount(balanceData: Recharge[] | PaymentWithBusinessName[]) {
+    let result = 0;
+
+    for(let data of balanceData) {
+        result += data.amount;
+    }
+
+    return result;
 }

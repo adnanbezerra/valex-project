@@ -34,5 +34,14 @@ export default async function errorHandler(error: any, req: Request, res: Respon
     if (error.type === "error_wrongPassword") {
         return res.status(401).send({ message: error.message });
     }
-    // res.sendStatus(500)
+    if (error.type === "error_apiKey_notExistent") {
+        return res.status(404).send({ message: error.message });
+    }
+    if (error.type === "error_business_notFound") {
+        return res.status(404).send({ message: error.message });
+    }
+    if (error.type === "error_wrong_creditCardType") {
+        return res.status(401).send({ message: error.message });
+    }
+    res.sendStatus(500)
 }

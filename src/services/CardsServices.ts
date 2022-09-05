@@ -27,13 +27,13 @@ export async function createNewCard(apiKey: string | string[], cardInfo: any) {
     await insert(card);
 
     const cvv = cryptr.decrypt(securityCode);
-    return cvv;
+    return { cvv, number };
 }
 
 export async function createCardPassword(cardInfo: any) {
     const { CVC, cardIdentifier, newPassword } = cardInfo;
     const password = bcrypt.hashSync(newPassword, 10);
-    const isBlocked = true;
+    const isBlocked = false;
 
     const creditCard = await checkCardIntegrity(CVC, cardIdentifier);
 
@@ -43,7 +43,7 @@ export async function createCardPassword(cardInfo: any) {
 }
 
 export async function generateCardBalance(cardNumber: string) {
-    const { id: cardId } = await getCardIdByNumber(cardNumber);
+    const { id: cardId } = await getCardByNumber(cardNumber);
 
     const rechargesList = await findByCardId(cardId);
     const paymentsList = await findPaymentsByCardId(cardId);
@@ -60,7 +60,7 @@ export async function generateCardBalance(cardNumber: string) {
 }
 
 export async function blockCard(cardNumber: string, password: string) {
-    const creditCard = await getCardIdByNumber(cardNumber);
+    const creditCard = await getCardByNumber(cardNumber);
 
     if (compareExpirationDate(creditCard.expirationDate)) throw { type: "error_creditCard_expired", message: "This credit card has already expired!" }
     if (creditCard.isBlocked) throw { type: "error_creditCard_blocked", message: "This credit card is blocked!" }
@@ -70,7 +70,7 @@ export async function blockCard(cardNumber: string, password: string) {
 }
 
 export async function unblockCard(cardNumber: string, password: string) {
-    const creditCard = await getCardIdByNumber(cardNumber);
+    const creditCard = await getCardByNumber(cardNumber);
 
     if (compareExpirationDate(creditCard.expirationDate)) throw { type: "error_creditCard_expired", message: "This credit card has already expired!" }
     if (!creditCard.isBlocked) throw { type: "error_creditCard_notBlocked", message: "This credit card is not blocked!" }
@@ -137,7 +137,7 @@ async function checkCardIntegrity(CVC: string, cardIdentifier: string) {
     return creditCard;
 }
 
-function compareExpirationDate(date: string): boolean {
+export function compareExpirationDate(date: string): boolean {
     const yearNow = parseInt(dayjs().format('YY'));
     const monthNow = parseInt(dayjs().format('MM'));
 
@@ -153,7 +153,7 @@ function compareExpirationDate(date: string): boolean {
 
 // auxiliary functions for generateCardBalance function
 
-function getBalanceResult(rechargesList: Recharge[], paymentsList: PaymentWithBusinessName[]) {
+export function getBalanceResult(rechargesList: Recharge[], paymentsList: PaymentWithBusinessName[]) {
     return getRechargesAmount(rechargesList) - getRechargesAmount(paymentsList);
 }
 
@@ -167,7 +167,7 @@ function getRechargesAmount(balanceData: Recharge[] | PaymentWithBusinessName[])
     return result;
 }
 
-async function getCardIdByNumber(cardNumber: string) {
+export async function getCardByNumber(cardNumber: string) {
     const creditCard = await findByCardNumber(cardNumber);
     if (!creditCard) throw { type: "invalid_creditCard_Number", message: "Credit card number not found!" };
 

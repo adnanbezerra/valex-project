@@ -10,7 +10,7 @@ import { CardInfoSchema } from "../schemas/CardInfoSchema.js";
 export const CardsRouter = Router();
 
 CardsRouter.post('/card', validateSchema(CardInfoSchema), ValidateApiKey, postCard);
-CardsRouter.put('/activateCard/:cardId', validateSchema(ActivateCardSchema), activateCard);
+CardsRouter.put('/activateCard/', validateSchema(ActivateCardSchema), activateCard);
 CardsRouter.get('/balance', validateSchema(BalanceSchema), getBalance);
 CardsRouter.put('/blockCard', validateSchema(BlockCardSchema), putBlockCard);
 CardsRouter.put('/unblockCard', validateSchema(BlockCardSchema), putUnblockCard);
